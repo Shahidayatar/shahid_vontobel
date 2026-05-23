@@ -31,4 +31,4 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }} # used for GitHub API calls
           action: "upload"
           app_location: "./frontend"
-          output_location: "./frontend/out"
+          output_location: ".next"
