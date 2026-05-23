@@ -1,0 +1,28 @@
+# Node
+node_modules
+
+# Build output
+dist
+.next
+frontend/.next
+frontend/out
+coverage
+
+# Environment
+.env
+.env.*
+
+# Uploads
+backend/data/uploads
+
+# Logs
+*.log
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+terraform.tfvars
+terraform.rc

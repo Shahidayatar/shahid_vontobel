@@ -1,0 +1,48 @@
+import { AgentRepository } from "./repositories/agent.repository";
+import { DocumentRepository } from "./repositories/document.repository";
+import { PromptRepository } from "./repositories/prompt.repository";
+import { ProvisioningRepository } from "./repositories/provisioning.repository";
+import { UsageRepository } from "./repositories/usage.repository";
+import { createAzureClients } from "./azure/azure-clients";
+import { AgentService } from "./services/agent-service/agent.service";
+import { ChatService } from "./services/chat-service/chat.service";
+import { EvaluationService } from "./services/evaluation-service/evaluation.service";
+import { ProvisioningService } from "./services/provisioning-service/provisioning.service";
+import { PromptService } from "./services/prompt-service/prompt.service";
+import { RagService } from "./services/rag-service/rag.service";
+import { UsageService } from "./services/usage-service/usage.service";
+
+export function createContainer() {
+  const azureClients = createAzureClients();
+  const agentRepository = new AgentRepository();
+  const documentRepository = new DocumentRepository();
+  const promptRepository = new PromptRepository();
+  const usageRepository = new UsageRepository();
+  const provisioningRepository = new ProvisioningRepository();
+
+  const agentService = new AgentService(agentRepository, promptRepository);
+  const provisioningService = new ProvisioningService(agentRepository, provisioningRepository, azureClients, agentService);
+  const ragService = new RagService(agentRepository, documentRepository, usageRepository, azureClients);
+  const chatService = new ChatService(agentRepository, documentRepository, promptRepository, usageRepository, azureClients);
+  const promptService = new PromptService(agentRepository, promptRepository);
+  const evaluationService = new EvaluationService();
+  const usageService = new UsageService(usageRepository);
+
+  return {
+    agentRepository,
+    documentRepository,
+    promptRepository,
+    usageRepository,
+    provisioningRepository,
+    azureClients,
+    agentService,
+    provisioningService,
+    ragService,
+    chatService,
+    promptService,
+    evaluationService,
+    usageService
+  };
+}
+
+export type AppContainer = ReturnType<typeof createContainer>;

@@ -1,0 +1,139 @@
+openapi: 3.1.0
+info:
+  title: AI Foundry as a Service API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+  /agents:
+    post:
+      summary: Create an agent
+      responses:
+        "201":
+          description: Created
+    get:
+      summary: List agents
+      responses:
+        "200":
+          description: OK
+  /agents/{id}:
+    get:
+      summary: Get agent by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /provision/{agentId}:
+    post:
+      summary: Provision agent resources
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Accepted
+  /provision/status/{agentId}:
+    get:
+      summary: Get provisioning status
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /documents/upload:
+    post:
+      summary: Upload a document
+      responses:
+        "201":
+          description: Created
+  /documents/{agentId}/index:
+    post:
+      summary: Index documents for an agent
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /chat:
+    post:
+      summary: Chat with an agent
+      responses:
+        "200":
+          description: OK
+  /prompts:
+    post:
+      summary: Create a prompt version
+      responses:
+        "201":
+          description: Created
+  /prompts/{agentId}:
+    get:
+      summary: List prompt versions for an agent
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /evaluate:
+    post:
+      summary: Evaluate a response
+      responses:
+        "200":
+          description: OK
+  /usage/{tenantId}:
+    get:
+      summary: Get tenant usage
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        name:
+          type: string
+        model:
+          type: string
+        systemPrompt:
+          type: string
+        dataSources:
+          type: array
+          items:
+            type: string
