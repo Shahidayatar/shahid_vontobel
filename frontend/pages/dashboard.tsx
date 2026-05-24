@@ -68,6 +68,7 @@ export default function DashboardPage() {
         <article className="surface-card">
           <h2>Platform shortcuts</h2>
           <div className="stack-list compact">
+            <Link className="shortcut-link" href="/deploy-model">Deploy model</Link>
             <Link className="shortcut-link" href="/upload-documents">Upload documents</Link>
             <Link className="shortcut-link" href="/analytics">Usage and cost analytics</Link>
             <Link className="shortcut-link" href="/chat">Chat interface</Link>

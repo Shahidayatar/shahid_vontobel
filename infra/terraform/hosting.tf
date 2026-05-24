@@ -48,6 +48,10 @@ resource "azurerm_linux_web_app" "backend" {
     NODE_ENV                              = "production"
     AUTH_DISABLED                         = "true"
     APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.base.connection_string
+    AZURE_OPENAI_SUBSCRIPTION_ID          = data.azurerm_client_config.current.subscription_id
+    AZURE_OPENAI_RESOURCE_GROUP_NAME      = azurerm_resource_group.base.name
+    AZURE_OPENAI_ACCOUNT_NAME             = azurerm_cognitive_account.openai.name
+    AZURE_OPENAI_LOCATION                 = var.location
     AZURE_SEARCH_ENDPOINT                 = "https://${azurerm_search_service.base.name}.search.windows.net"
     AZURE_BLOB_SERVICE_URL                = "https://${azurerm_storage_account.base.name}.blob.core.windows.net"
     AZURE_KEY_VAULT_URL                   = azurerm_key_vault.base.vault_uri
@@ -78,7 +82,7 @@ resource "azurerm_role_assignment" "backend_search" {
 
 resource "azurerm_role_assignment" "backend_openai" {
   scope                = azurerm_cognitive_account.openai.id
-  role_definition_name = "Cognitive Services OpenAI User"
+  role_definition_name = "Cognitive Services OpenAI Contributor"
   principal_id         = azurerm_user_assigned_identity.base.principal_id
 }
 

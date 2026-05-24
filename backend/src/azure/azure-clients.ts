@@ -8,10 +8,45 @@ import {
 import { SecretClient } from "@azure/keyvault-secrets";
 import { env } from "../config/env";
 
+export type AzureOpenAiModelCatalogEntry = {
+  id: string;
+  displayName: string;
+  provider: string;
+  modelName: string;
+  version?: string;
+  description: string;
+  lifecycleStatus?: string;
+  capabilities?: Record<string, unknown>;
+  defaultSystemPrompt: string;
+};
+
+export type AzureOpenAiDeploymentStatus = {
+  id: string;
+  name: string;
+  modelName: string;
+  modelVersion?: string;
+  provisioningState?: string;
+};
+
 export type AzureOpenAiClients = {
   getClient(): Promise<any>;
   chatDeployment: string;
   embeddingDeployment: string;
+};
+
+export type AzureOpenAiManagementClients = {
+  subscriptionId: string;
+  resourceGroupName: string;
+  accountName: string;
+  location: string;
+  listModels(): Promise<AzureOpenAiModelCatalogEntry[]>;
+  listDeployments(): Promise<AzureOpenAiDeploymentStatus[]>;
+  createDeployment(input: {
+    deploymentName: string;
+    modelName: string;
+    modelVersion?: string;
+    capacity?: number;
+  }): Promise<AzureOpenAiDeploymentStatus>;
 };
 
 export type AzureSearchClients = {
@@ -33,6 +68,7 @@ export type AzureKeyVaultClients = {
 
 export type AzureClients = {
   openAi?: AzureOpenAiClients;
+  openAiManagement?: AzureOpenAiManagementClients;
   search?: AzureSearchClients;
   blob?: AzureBlobClients;
   keyVault?: AzureKeyVaultClients;
@@ -40,6 +76,38 @@ export type AzureClients = {
 
 function createCredential() {
   return new DefaultAzureCredential();
+}
+
+async function getManagementToken(credential: DefaultAzureCredential) {
+  const token = await credential.getToken("https://management.azure.com/.default");
+  if (!token?.token) {
+    throw new Error("Unable to acquire Azure management token");
+  }
+
+  return token.token;
+}
+
+async function managementRequest<T>(credential: DefaultAzureCredential, url: string, init?: RequestInit): Promise<T> {
+  const token = await getManagementToken(credential);
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      ...init?.headers
+    }
+  });
+
+  if (!response.ok) {
+    const payload = await response.text().catch(() => "");
+    throw new Error(`Azure management request failed (${response.status}): ${payload}`);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json() as Promise<T>;
 }
 
 function createSearchIndex(indexName: string, dimensions: number): SearchIndex {
@@ -98,6 +166,82 @@ export function createAzureClients(): AzureClients {
       }
     : undefined;
 
+  const openAiManagement = env.AZURE_OPENAI_SUBSCRIPTION_ID && env.AZURE_OPENAI_RESOURCE_GROUP_NAME && env.AZURE_OPENAI_ACCOUNT_NAME && env.AZURE_OPENAI_LOCATION
+    ? {
+        subscriptionId: env.AZURE_OPENAI_SUBSCRIPTION_ID,
+        resourceGroupName: env.AZURE_OPENAI_RESOURCE_GROUP_NAME,
+        accountName: env.AZURE_OPENAI_ACCOUNT_NAME,
+        location: env.AZURE_OPENAI_LOCATION,
+        async listModels() {
+          const payload = await managementRequest<{ value?: Array<Record<string, any>> }>(
+            credential,
+            `https://management.azure.com/subscriptions/${env.AZURE_OPENAI_SUBSCRIPTION_ID}/providers/Microsoft.CognitiveServices/locations/${encodeURIComponent(env.AZURE_OPENAI_LOCATION as string)}/models?api-version=2024-10-01`
+          );
+
+          return (payload.value ?? [])
+            .filter((entry) => entry.kind === "OpenAI" && entry.model?.name)
+            .filter((entry) => entry.lifecycleStatus !== "Deprecated" && entry.lifecycleStatus !== "Deprecating")
+            .map((entry) => ({
+              id: String(entry.model?.name),
+              displayName: String(entry.model?.name),
+              provider: String(entry.model?.publisher ?? "Azure OpenAI"),
+              modelName: String(entry.model?.name),
+              version: entry.model?.version ? String(entry.model.version) : undefined,
+              description: String(entry.description ?? `${entry.model?.name} model available in ${env.AZURE_OPENAI_LOCATION}`),
+              lifecycleStatus: entry.lifecycleStatus ? String(entry.lifecycleStatus) : undefined,
+              capabilities: entry.model?.capabilities ?? {},
+              defaultSystemPrompt: `You are an enterprise assistant using ${String(entry.model?.name)}.`
+            }));
+        },
+        async listDeployments() {
+          const payload = await managementRequest<{ value?: Array<Record<string, any>> }>(
+            credential,
+            `https://management.azure.com/subscriptions/${env.AZURE_OPENAI_SUBSCRIPTION_ID}/resourceGroups/${encodeURIComponent(env.AZURE_OPENAI_RESOURCE_GROUP_NAME as string)}/providers/Microsoft.CognitiveServices/accounts/${encodeURIComponent(env.AZURE_OPENAI_ACCOUNT_NAME as string)}/deployments?api-version=2024-10-01`
+          );
+
+          return (payload.value ?? []).map((entry) => ({
+            id: String(entry.id),
+            name: String(entry.name),
+            modelName: String(entry.properties?.model?.name ?? entry.name),
+            modelVersion: entry.properties?.model?.version ? String(entry.properties.model.version) : undefined,
+            provisioningState: entry.properties?.provisioningState ? String(entry.properties.provisioningState) : undefined
+          }));
+        },
+        async createDeployment(input: { deploymentName: string; modelName: string; modelVersion?: string; capacity?: number; }) {
+          const body = {
+            sku: {
+              name: "Standard",
+              capacity: input.capacity ?? 1
+            },
+            properties: {
+              model: {
+                format: "OpenAI",
+                name: input.modelName,
+                ...(input.modelVersion ? { version: input.modelVersion } : {})
+              }
+            }
+          };
+
+          const result = await managementRequest<Record<string, any>>(
+            credential,
+            `https://management.azure.com/subscriptions/${env.AZURE_OPENAI_SUBSCRIPTION_ID}/resourceGroups/${encodeURIComponent(env.AZURE_OPENAI_RESOURCE_GROUP_NAME as string)}/providers/Microsoft.CognitiveServices/accounts/${encodeURIComponent(env.AZURE_OPENAI_ACCOUNT_NAME as string)}/deployments/${encodeURIComponent(input.deploymentName)}?api-version=2024-10-01`,
+            {
+              method: "PUT",
+              body: JSON.stringify(body)
+            }
+          );
+
+          return {
+            id: String(result.id ?? input.deploymentName),
+            name: String(result.name ?? input.deploymentName),
+            modelName: input.modelName,
+            modelVersion: input.modelVersion,
+            provisioningState: String(result.properties?.provisioningState ?? "Creating")
+          };
+        }
+      } satisfies AzureOpenAiManagementClients
+    : undefined;
+
   const search = env.AZURE_SEARCH_ENDPOINT
     ? (() => {
         const indexClient = new SearchIndexClient(env.AZURE_SEARCH_ENDPOINT, credential);
@@ -142,6 +286,7 @@ export function createAzureClients(): AzureClients {
 
   return {
     openAi,
+    openAiManagement,
     search,
     blob,
     keyVault

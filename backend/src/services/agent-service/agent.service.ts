@@ -104,6 +104,22 @@ export class AgentService {
     return this.agentRepository.delete(agentId);
   }
 
+  assignResourcePlan(agentId: string, tenantId: string, resourcePlan: AgentResourcePlan): Agent | undefined {
+    const current = this.getAgent(tenantId, agentId);
+    if (!current) {
+      return undefined;
+    }
+
+    const updated: Agent = {
+      ...current,
+      resourcePlan,
+      updatedAt: new Date().toISOString()
+    };
+
+    this.agentRepository.save(updated);
+    return updated;
+  }
+
   markProvisioned(agentId: string, resourcePlan: AgentResourcePlan, status: string): Agent | undefined {
     const agent = this.agentRepository.findById(agentId);
     if (!agent) {

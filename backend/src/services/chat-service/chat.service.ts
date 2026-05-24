@@ -46,6 +46,7 @@ export class ChatService {
     const completion = await this.generateAnswer({
       agentName: agent.name,
       model: agent.model,
+      deploymentName: agent.resourcePlan?.openAIDeploymentName ?? this.azureClients?.openAi?.chatDeployment ?? agent.model,
       systemPrompt: prompt.systemPrompt,
       question: request.question,
       contexts: ranked.map((chunk) => ({ fileName: chunk.fileName, text: chunk.text, score: chunk.score }))
@@ -126,6 +127,7 @@ export class ChatService {
   private async generateAnswer(input: {
     agentName: string;
     model: string;
+    deploymentName: string;
     systemPrompt: string;
     question: string;
     contexts: Array<{ fileName: string; text: string; score: number }>;
@@ -144,7 +146,7 @@ export class ChatService {
         }
       ] as any;
 
-      const response = await openAiClient.getChatCompletions(this.azureClients.openAi.chatDeployment, messages, {
+      const response = await openAiClient.getChatCompletions(input.deploymentName, messages, {
         temperature: 0.2,
         maxTokens: 800
       } as any);
