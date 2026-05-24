@@ -15,6 +15,7 @@ type ModelCatalogItem = {
 
 type ModelDeployment = {
   id: string;
+  tenantId: string;
   deploymentName: string;
   modelName: string;
   state: "queued" | "running" | "succeeded" | "failed";
@@ -84,6 +85,16 @@ export default function DeployModelPage() {
     setDeployments(refreshed);
   }
 
+  async function handleDelete(deploymentId: string) {
+    if (!tenantId) {
+      return;
+    }
+
+    await api.delete<{ deleted: boolean }>(`/model-deployments/${deploymentId}`, { tenantId });
+    const refreshed = await api.get<ModelDeployment[]>(`/model-deployments?tenantId=${encodeURIComponent(tenantId)}`);
+    setDeployments(refreshed);
+  }
+
   useEffect(() => {
     if (!tenantId) {
       return;
@@ -136,6 +147,11 @@ export default function DeployModelPage() {
                   <br />
                   {deployment.provisioningMessage}
                 </p>
+                {deployment.tenantId !== "platform" ? (
+                  <button className="secondary-button" type="button" onClick={() => handleDelete(deployment.id)}>
+                    Delete deployment
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>

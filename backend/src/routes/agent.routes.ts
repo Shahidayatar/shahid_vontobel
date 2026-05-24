@@ -9,6 +9,7 @@ export function createAgentRoutes(container: AppContainer) {
   router.post("/agents", controller.createAgent);
   router.get("/agents", controller.listAgents);
   router.get("/agents/:id", controller.getAgent);
+  router.delete("/agents/:id", controller.deleteAgent);
 
   return router;
 }

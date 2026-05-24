@@ -40,6 +40,9 @@ const MODEL_CATALOG: ModelCatalogItem[] = [
   }
 ];
 
+const PLATFORM_TENANT_ID = "platform";
+const PLATFORM_DEPLOYMENT_NAME = "platform-gpt5-pro";
+
 export class ModelDeploymentService {
   constructor(
     private readonly deploymentRepository: ModelDeploymentRepository,
@@ -47,6 +50,46 @@ export class ModelDeploymentService {
     private readonly provisioningService: ProvisioningService,
     private readonly azureClients?: AzureClients
   ) {}
+
+  async ensureBaseDeployment() {
+    const existing = this.deploymentRepository.listAll().find((deployment) => deployment.tenantId === PLATFORM_TENANT_ID && deployment.modelId === "gpt-5-pro");
+    if (existing) {
+      return existing;
+    }
+
+    const catalog = await this.listCatalog();
+    const baseModel = catalog.find((item) => item.id === "gpt-5-pro") ?? MODEL_CATALOG[0];
+    const now = new Date().toISOString();
+    const baseDeployment = this.deploymentRepository.save({
+      id: randomUUID(),
+      tenantId: PLATFORM_TENANT_ID,
+      agentId: `platform-${baseModel.id}`,
+      deploymentName: PLATFORM_DEPLOYMENT_NAME,
+      modelId: baseModel.id,
+      modelName: baseModel.modelName,
+      modelVersion: baseModel.version,
+      description: baseModel.description,
+      state: "succeeded",
+      provisioningMessage: "Platform base deployment available",
+      createdAt: now,
+      updatedAt: now
+    });
+
+    if (this.azureClients?.openAiManagement) {
+      const deployments = await this.azureClients.openAiManagement.listDeployments();
+      const deployed = deployments.some((deployment) => deployment.name === PLATFORM_DEPLOYMENT_NAME);
+      if (!deployed) {
+        await this.azureClients.openAiManagement.createDeployment({
+          deploymentName: PLATFORM_DEPLOYMENT_NAME,
+          modelName: baseModel.modelName,
+          modelVersion: baseModel.version,
+          capacity: 1
+        });
+      }
+    }
+
+    return baseDeployment;
+  }
 
   async listCatalog(): Promise<ModelCatalogItem[]> {
     if (this.azureClients?.openAiManagement) {
@@ -64,7 +107,10 @@ export class ModelDeploymentService {
   }
 
   listDeployments(tenantId: string): ModelDeployment[] {
-    return this.deploymentRepository.listByTenant(tenantId).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+    return this.deploymentRepository
+      .listAll()
+      .filter((deployment) => deployment.tenantId === tenantId || deployment.tenantId === PLATFORM_TENANT_ID)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
   }
 
   async deployModel(input: DeployModelInput) {
@@ -110,6 +156,24 @@ export class ModelDeploymentService {
     void this.runDeployment(queued, agent.id, input.tenantId, catalogItem);
 
     return { deployment: queued, agent, catalogItem };
+  }
+
+  async deleteDeployment(tenantId: string, deploymentId: string) {
+    const deployment = this.deploymentRepository.findById(deploymentId);
+    if (!deployment || (deployment.tenantId !== tenantId && deployment.tenantId !== PLATFORM_TENANT_ID)) {
+      return false;
+    }
+
+    if (deployment.tenantId === PLATFORM_TENANT_ID) {
+      throw new Error("The platform base deployment cannot be deleted");
+    }
+
+    if (this.azureClients?.openAiManagement) {
+      await this.azureClients.openAiManagement.deleteDeployment(deployment.deploymentName);
+    }
+
+    this.agentService.deleteAgent(deployment.tenantId, deployment.agentId);
+    return this.deploymentRepository.delete(deploymentId);
   }
 
   private async runDeployment(deployment: ModelDeployment, agentId: string, tenantId: string, catalogItem: ModelCatalogItem) {

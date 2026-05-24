@@ -47,6 +47,7 @@ export type AzureOpenAiManagementClients = {
     modelVersion?: string;
     capacity?: number;
   }): Promise<AzureOpenAiDeploymentStatus>;
+  deleteDeployment(deploymentName: string): Promise<void>;
 };
 
 export type AzureSearchClients = {
@@ -238,6 +239,15 @@ export function createAzureClients(): AzureClients {
             modelVersion: input.modelVersion,
             provisioningState: String(result.properties?.provisioningState ?? "Creating")
           };
+        },
+        async deleteDeployment(deploymentName: string) {
+          await managementRequest<void>(
+            credential,
+            `https://management.azure.com/subscriptions/${env.AZURE_OPENAI_SUBSCRIPTION_ID}/resourceGroups/${encodeURIComponent(env.AZURE_OPENAI_RESOURCE_GROUP_NAME as string)}/providers/Microsoft.CognitiveServices/accounts/${encodeURIComponent(env.AZURE_OPENAI_ACCOUNT_NAME as string)}/deployments/${encodeURIComponent(deploymentName)}?api-version=2024-10-01`,
+            {
+              method: "DELETE"
+            }
+          );
         }
       } satisfies AzureOpenAiManagementClients
     : undefined;

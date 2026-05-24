@@ -37,5 +37,26 @@ export function createModelDeploymentController(container: AppContainer) {
         return res.status(500).json({ error: message });
       }
     }
+    ,
+    deleteDeployment: async (req: Request, res: Response) => {
+      const tenantId = req.auth?.tenantId ?? req.body.tenantId ?? req.query.tenantId?.toString();
+      const deploymentId = String(req.params.id ?? req.body.deploymentId ?? req.query.deploymentId ?? "");
+
+      if (!tenantId || !deploymentId) {
+        return res.status(400).json({ error: "tenantId and deploymentId are required" });
+      }
+
+      try {
+        const deleted = await container.modelDeploymentService.deleteDeployment(tenantId, deploymentId);
+        if (!deleted) {
+          return res.status(404).json({ error: "Deployment not found" });
+        }
+
+        return res.json({ deleted: true });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Delete failed";
+        return res.status(400).json({ error: message });
+      }
+    }
   };
 }

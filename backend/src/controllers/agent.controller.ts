@@ -28,6 +28,19 @@ export function createAgentController(container: AppContainer) {
 
       return res.json(container.agentService.listAgents(tenantId));
     },
+    deleteAgent: (req: Request, res: Response) => {
+      const tenantId = req.auth?.tenantId ?? req.query.tenantId?.toString() ?? req.body.tenantId;
+      if (!tenantId) {
+        return res.status(400).json({ error: "tenantId is required" });
+      }
+
+      const deleted = container.agentService.deleteAgent(tenantId, String(req.params.id));
+      if (!deleted) {
+        return res.status(404).json({ error: "Agent not found" });
+      }
+
+      return res.json({ deleted: true });
+    },
     getAgent: (req: Request, res: Response) => {
       const tenantId = req.auth?.tenantId ?? req.query.tenantId?.toString();
       if (!tenantId) {

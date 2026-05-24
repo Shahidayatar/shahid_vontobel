@@ -30,6 +30,16 @@ export default function DashboardPage() {
       });
   }, [tenantId]);
 
+  async function handleDelete(agentId: string) {
+    if (!tenantId) {
+      return;
+    }
+
+    await api.delete<{ deleted: boolean }>(`/agents/${agentId}`, { tenantId });
+    const refreshed = await api.get<Agent[]>(`/agents?tenantId=${encodeURIComponent(tenantId)}`);
+    setAgents(refreshed);
+  }
+
   return (
     <AppShell title="Agent dashboard" description="Track agents, provisioning state, and the platform entry points from one place.">
       <section className="hero-panel">
@@ -57,9 +67,14 @@ export default function DashboardPage() {
                   <strong>{agent.name}</strong>
                   <p>{agent.model}</p>
                 </div>
-                <span className={agent.isProvisioned ? "status-pill success" : "status-pill pending"}>
-                  {agent.isProvisioned ? "Provisioned" : agent.provisioningStatus ?? "Not provisioned"}
-                </span>
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                  <span className={agent.isProvisioned ? "status-pill success" : "status-pill pending"}>
+                    {agent.isProvisioned ? "Provisioned" : agent.provisioningStatus ?? "Not provisioned"}
+                  </span>
+                  <button className="secondary-button" type="button" onClick={() => handleDelete(agent.id)}>
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>

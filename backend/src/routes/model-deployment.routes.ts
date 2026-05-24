@@ -9,6 +9,7 @@ export function createModelDeploymentRoutes(container: AppContainer) {
   router.get("/models/catalog", controller.catalog);
   router.get("/model-deployments", controller.listDeployments);
   router.post("/model-deployments", controller.deploy);
+  router.delete("/model-deployments/:id", controller.deleteDeployment);
 
   return router;
 }

@@ -25,6 +25,9 @@ export const api = {
   post<T>(path: string, body: unknown) {
     return request<T>(path, { method: "POST", body: JSON.stringify(body) });
   },
+  delete<T>(path: string, body?: unknown) {
+    return request<T>(path, { method: "DELETE", body: body ? JSON.stringify(body) : undefined });
+  },
   upload<T>(path: string, formData: FormData) {
     return fetch(`${baseUrl}${path}`, {
       method: "POST",

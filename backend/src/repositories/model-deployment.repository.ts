@@ -12,7 +12,15 @@ export class ModelDeploymentRepository {
     return this.deployments.get(id);
   }
 
+  delete(id: string): boolean {
+    return this.deployments.delete(id);
+  }
+
   listByTenant(tenantId: string): ModelDeployment[] {
     return Array.from(this.deployments.values()).filter((deployment) => deployment.tenantId === tenantId);
+  }
+
+  listAll(): ModelDeployment[] {
+    return Array.from(this.deployments.values());
   }
 }

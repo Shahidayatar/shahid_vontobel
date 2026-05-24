@@ -13,6 +13,7 @@ import { ProvisioningService } from "./services/provisioning-service/provisionin
 import { PromptService } from "./services/prompt-service/prompt.service";
 import { RagService } from "./services/rag-service/rag.service";
 import { UsageService } from "./services/usage-service/usage.service";
+import { logger } from "./config/logger";
 
 export function createContainer() {
   const azureClients = createAzureClients();
@@ -31,6 +32,12 @@ export function createContainer() {
   const modelDeploymentService = new ModelDeploymentService(modelDeploymentRepository, agentService, provisioningService, azureClients);
   const evaluationService = new EvaluationService();
   const usageService = new UsageService(usageRepository);
+
+  void modelDeploymentService.ensureBaseDeployment().catch((error) => {
+    logger.warn("Base deployment seed failed", {
+      error: error instanceof Error ? error.message : String(error)
+    });
+  });
 
   return {
     agentRepository,

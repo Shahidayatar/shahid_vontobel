@@ -53,6 +53,7 @@ resource "azurerm_linux_web_app" "backend" {
     AZURE_OPENAI_RESOURCE_GROUP_NAME      = azurerm_resource_group.base.name
     AZURE_OPENAI_ACCOUNT_NAME             = azurerm_cognitive_account.openai.name
     AZURE_OPENAI_LOCATION                 = var.location
+    AZURE_CLIENT_ID                       = azurerm_user_assigned_identity.base.client_id
     AZURE_SEARCH_ENDPOINT                 = "https://${azurerm_search_service.base.name}.search.windows.net"
     AZURE_BLOB_SERVICE_URL                = "https://${azurerm_storage_account.base.name}.blob.core.windows.net"
     AZURE_KEY_VAULT_URL                   = azurerm_key_vault.base.vault_uri
