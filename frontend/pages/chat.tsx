@@ -54,15 +54,30 @@ export default function ChatPage() {
   }
 
   return (
-    <AppShell title="Chat" description="Chat with a deployed model or a provisioned agent and inspect the grounded response.">
+    <AppShell title="Chat playground" description="Open a deployed agent, inspect retrieval context, and review the execution trace in one place.">
+      <section className="hero-panel dashboard-hero">
+        <div>
+          <p className="eyebrow">Playground</p>
+          <h1>Enterprise chat workspace</h1>
+          <p className="hero-copy">Switch agents, test prompts, and inspect grounded responses with retrieval context.</p>
+        </div>
+        <div className="hero-actions">
+          <button className="secondary-button" type="button" onClick={() => router.push("/deploy-model")}>Open deployments</button>
+        </div>
+      </section>
+
       <div className="page-grid chat-grid">
-        <form className="surface-card form-card" onSubmit={handleSubmit}>
+        <form className="surface-card form-card chat-controls" onSubmit={handleSubmit}>
           <label>
             Agent
             <select value={agentId} onChange={(event) => setAgentId(event.target.value)}>
               {agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
             </select>
           </label>
+          <div className="stack-list compact">
+            <div className="list-row"><div><strong>Prompt inspector</strong><p>Review the active system prompt and retrieval path.</p></div></div>
+            <div className="list-row"><div><strong>Execution trace</strong><p>Visible after each response.</p></div></div>
+          </div>
           <label>
             Question
             <textarea value={question} onChange={(event) => setQuestion(event.target.value)} rows={7} />
@@ -70,7 +85,7 @@ export default function ChatPage() {
           <button className="primary-button" type="submit">Send</button>
         </form>
 
-        <section className="surface-card chat-panel">
+        <section className="surface-card chat-panel chat-transcript">
           <h2>Conversation</h2>
           <div className="chat-thread">
             {messages.map((message, index) => (
