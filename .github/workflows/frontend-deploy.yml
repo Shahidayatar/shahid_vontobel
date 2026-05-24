@@ -22,6 +22,8 @@ jobs:
 
       - name: Build frontend
         working-directory: ./frontend
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://shahid-vontobel-api.azurewebsites.net
         run: npm run build
 
       - name: Deploy to Azure Static Web Apps

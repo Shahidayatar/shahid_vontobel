@@ -1,13 +1,19 @@
-variable "name_prefix" {
+variable "resource_group_name" {
   type        = string
-  description = "Short name prefix for all Azure resources"
-  default     = "aifoundry"
+  description = "Azure resource group name for the base platform"
+  default     = "Shahid_vontobel"
+}
+
+variable "resource_prefix" {
+  type        = string
+  description = "Prefix used to build Azure resource names"
+  default     = "Shahid"
 }
 
 variable "environment" {
   type        = string
-  description = "Environment name"
-  default     = "dev"
+  description = "Environment label for tags"
+  default     = "base"
 }
 
 variable "location" {
@@ -16,13 +22,19 @@ variable "location" {
   default     = "eastus"
 }
 
-variable "tags" {
-  type        = map(string)
-  default     = {}
+variable "hosting_location" {
+  type        = string
+  description = "Azure region used for the backend App Service hosting plan"
+  default     = "swedencentral"
 }
 
-variable "existing_resource_group" {
+variable "static_web_app_location" {
   type        = string
-  description = "Optional: use an existing resource group name instead of creating a new one"
-  default     = ""
+  description = "Azure region used for the Static Web App"
+  default     = "eastus2"
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
 }
