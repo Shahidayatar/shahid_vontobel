@@ -4,6 +4,7 @@ import type { ProvisioningService } from "../provisioning-service/provisioning.s
 import { ModelDeploymentRepository } from "../../repositories/model-deployment.repository";
 import type { ModelCatalogItem, ModelDeployment } from "../../models/model-deployment";
 import type { AzureClients } from "../../azure/azure-clients";
+import { logger } from "../../config/logger";
 
 export type DeployModelInput = {
   tenantId: string;
@@ -99,7 +100,11 @@ export class ModelDeploymentService {
           return items;
         }
         throw new Error("Azure OpenAI catalog returned no deployable models");
-      } catch {
+      } catch (error) {
+        logger.error("Azure OpenAI catalog lookup failed", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
         // If Azure management access exists, do not silently fall back.
         // The UI should surface the real auth or catalog problem.
         throw new Error("Failed to load Azure OpenAI model catalog");

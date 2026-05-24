@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { AppContainer } from "../container";
+import { logger } from "../config/logger";
 
 export function createModelDeploymentController(container: AppContainer) {
   return {
@@ -8,6 +9,10 @@ export function createModelDeploymentController(container: AppContainer) {
         return res.json(await container.modelDeploymentService.listCatalog());
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to load model catalog";
+        logger.error("Failed to load model catalog", {
+          error: message,
+          stack: error instanceof Error ? error.stack : undefined
+        });
         return res.status(500).json({ error: message });
       }
     },
