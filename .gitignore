@@ -17,6 +17,8 @@ backend/data/uploads
 
 # Logs
 *.log
+backend-logs/
+backend-logs.zip
 
 # Terraform
 **/.terraform/*

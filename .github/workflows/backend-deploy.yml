@@ -24,14 +24,17 @@ jobs:
         working-directory: ./backend
         run: npm run build
 
-      - name: Install production dependencies
-        working-directory: ./backend
-        run: npm prune --omit=dev
-
-      - name: Archive production build
-        working-directory: ./backend
+      - name: Prepare standalone deploy folder
+        shell: bash
         run: |
-          zip -r ../backend-deploy.zip package.json node_modules dist
+          DEPLOY_DIR="$RUNNER_TEMP/backend-deploy"
+          rm -rf "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR"
+          cp backend/package.json "$DEPLOY_DIR/package.json"
+          cp -R backend/dist "$DEPLOY_DIR/dist"
+          cd "$DEPLOY_DIR"
+          npm install --omit=dev
+          zip -r "$GITHUB_WORKSPACE/backend-deploy.zip" package.json package-lock.json node_modules dist
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
