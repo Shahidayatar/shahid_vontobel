@@ -33,7 +33,8 @@ resource "azurerm_linux_web_app" "backend" {
   }
 
   site_config {
-    always_on = true
+    always_on        = true
+    app_command_line = "npm start"
 
     application_stack {
       node_version = "22-lts"

@@ -22,6 +22,10 @@ export function buildApp() {
   app.use(authMiddleware);
   app.use(morgan("combined"));
 
+  app.get("/", (_req, res) => {
+    res.json({ status: "ok", app: env.APP_NAME, timestamp: new Date().toISOString() });
+  });
+
   app.get("/healthz", (_req, res) => {
     res.json({ status: "ok", app: env.APP_NAME, timestamp: new Date().toISOString() });
   });
