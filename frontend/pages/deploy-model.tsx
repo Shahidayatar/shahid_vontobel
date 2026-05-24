@@ -172,14 +172,14 @@ export default function DeployModelPage() {
         <form className="surface-card deploy-form-card form-card" onSubmit={handleSubmit}>
           <div className="section-title">
             <h2>Deploy a model</h2>
-            <p>Only Azure models that can actually be deployed are shown here.</p>
+            <p>Models are loaded live from your Azure OpenAI region and account.</p>
           </div>
 
           <label>
             Available model
             <select value={modelId} onChange={(event) => handleModelChange(event.target.value)} disabled={catalogLoading || catalog.length === 0}>
               {catalogLoading ? <option value="">Loading catalog...</option> : null}
-              {!catalogLoading && catalog.length === 0 ? <option value="">No deployable models found</option> : null}
+              {!catalogLoading && catalog.length === 0 ? <option value="">No Azure models returned</option> : null}
               {catalog.map((item) => (
                 <option key={item.id} value={item.id}>{item.displayName} - {item.provider}{item.version ? ` (${item.version})` : ""}</option>
               ))}

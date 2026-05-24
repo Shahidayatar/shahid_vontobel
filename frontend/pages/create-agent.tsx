@@ -139,7 +139,7 @@ export default function CreateAgentPage() {
             Base model
             <select value={model} onChange={(event) => setModel(event.target.value)} disabled={catalogLoading || catalog.length === 0}>
               {catalogLoading ? <option value="">Loading catalog...</option> : null}
-              {!catalogLoading && catalog.length === 0 ? <option value="">No deployable models found</option> : null}
+              {!catalogLoading && catalog.length === 0 ? <option value="">No Azure models returned</option> : null}
               {catalog.map((item) => (
                 <option key={item.id} value={item.modelName}>{item.displayName} - {item.provider}{item.version ? ` (${item.version})` : ""}</option>
               ))}

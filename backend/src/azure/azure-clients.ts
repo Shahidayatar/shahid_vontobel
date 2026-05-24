@@ -8,8 +8,6 @@ import {
 import { SecretClient } from "@azure/keyvault-secrets";
 import { env } from "../config/env";
 
-const DEPLOYABLE_MODEL_NAMES = new Set(["gpt-5-pro", "gpt-4o-mini"]);
-
 export type AzureOpenAiModelCatalogEntry = {
   id: string;
   displayName: string;
@@ -184,7 +182,6 @@ export function createAzureClients(): AzureClients {
           return (payload.value ?? [])
             .filter((entry) => entry.kind === "OpenAI" && entry.model?.name)
             .filter((entry) => entry.lifecycleStatus !== "Deprecated" && entry.lifecycleStatus !== "Deprecating")
-            .filter((entry) => DEPLOYABLE_MODEL_NAMES.has(String(entry.model?.name)))
             .map((entry) => ({
               id: String(entry.model?.name),
               displayName: String(entry.model?.name),
