@@ -33,17 +33,31 @@ export default function DeployModelPage() {
   const [description, setDescription] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [status, setStatus] = useState<string | null>(null);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [deploymentsLoading, setDeploymentsLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [deploymentsError, setDeploymentsError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<ModelCatalogItem[]>("/models/catalog").then((items) => {
-      setCatalog(items);
-      if (items.length > 0) {
-        setModelId(items[0].id);
-        setDescription(items[0].description);
-        setSystemPrompt(items[0].defaultSystemPrompt);
-        setDeploymentName(`${tenantId ?? "tenant-dev"}-${items[0].id}`);
-      }
-    });
+    setCatalogLoading(true);
+    setCatalogError(null);
+    api.get<ModelCatalogItem[]>('/models/catalog')
+      .then((items) => {
+        setCatalog(items);
+        if (items.length > 0) {
+          setModelId(items[0].id);
+          setDescription(items[0].description);
+          setSystemPrompt(items[0].defaultSystemPrompt);
+          setDeploymentName(`${tenantId ?? "tenant-dev"}-${items[0].id}`);
+        }
+      })
+      .catch((error: unknown) => {
+        setCatalogError(error instanceof Error ? error.message : "Failed to load model catalog");
+      })
+      .finally(() => setCatalogLoading(false));
   }, [tenantId]);
 
   useEffect(() => {
@@ -51,7 +65,14 @@ export default function DeployModelPage() {
       return;
     }
 
-    api.get<ModelDeployment[]>(`/model-deployments?tenantId=${encodeURIComponent(tenantId)}`).then(setDeployments);
+    setDeploymentsLoading(true);
+    setDeploymentsError(null);
+    api.get<ModelDeployment[]>(`/model-deployments?tenantId=${encodeURIComponent(tenantId)}`)
+      .then(setDeployments)
+      .catch((error: unknown) => {
+        setDeploymentsError(error instanceof Error ? error.message : "Failed to load deployments");
+      })
+      .finally(() => setDeploymentsLoading(false));
   }, [tenantId]);
 
   const selectedModel = useMemo(() => catalog.find((item) => item.id === modelId), [catalog, modelId]);
@@ -68,21 +89,32 @@ export default function DeployModelPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!tenantId || !modelId || !deploymentName) {
+    if (!tenantId || !modelId || !deploymentName || !description || !systemPrompt) {
       return;
     }
 
-    const result = await api.post<{ deployment: ModelDeployment }>("/model-deployments", {
-      tenantId,
-      modelId,
-      deploymentName,
-      description,
-      systemPrompt
-    });
+    setSubmitLoading(true);
+    setSubmitError(null);
+    setStatus(null);
 
-    setStatus(`Deployment ${result.deployment.deploymentName} is ${result.deployment.state}.`);
-    const refreshed = await api.get<ModelDeployment[]>(`/model-deployments?tenantId=${encodeURIComponent(tenantId)}`);
-    setDeployments(refreshed);
+    try {
+      const result = await api.post<{ deployment: ModelDeployment }>("/model-deployments", {
+        tenantId,
+        modelId,
+        deploymentName,
+        description,
+        systemPrompt
+      });
+
+      setStatus(`Deployment ${result.deployment.deploymentName} is ${result.deployment.state}.`);
+      setDeploymentName(`${tenantId}-${modelId}`);
+      const refreshed = await api.get<ModelDeployment[]>(`/model-deployments?tenantId=${encodeURIComponent(tenantId)}`);
+      setDeployments(refreshed);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Deployment failed");
+    } finally {
+      setSubmitLoading(false);
+    }
   }
 
   async function handleDelete(deploymentId: string) {
@@ -90,9 +122,17 @@ export default function DeployModelPage() {
       return;
     }
 
-    await api.delete<{ deleted: boolean }>(`/model-deployments/${deploymentId}`, { tenantId });
-    const refreshed = await api.get<ModelDeployment[]>(`/model-deployments?tenantId=${encodeURIComponent(tenantId)}`);
-    setDeployments(refreshed);
+    setDeletingId(deploymentId);
+    setSubmitError(null);
+    try {
+      await api.delete<{ deleted: boolean }>(`/model-deployments/${deploymentId}`, { tenantId });
+      const refreshed = await api.get<ModelDeployment[]>(`/model-deployments?tenantId=${encodeURIComponent(tenantId)}`);
+      setDeployments(refreshed);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   useEffect(() => {
@@ -114,7 +154,9 @@ export default function DeployModelPage() {
         <form className="surface-card form-card" onSubmit={handleSubmit}>
           <label>
             Available model
-            <select value={modelId} onChange={(event) => handleModelChange(event.target.value)}>
+            <select value={modelId} onChange={(event) => handleModelChange(event.target.value)} disabled={catalogLoading || catalog.length === 0}>
+              {catalogLoading ? <option value="">Loading catalog...</option> : null}
+              {!catalogLoading && catalog.length === 0 ? <option value="">No deployable models found</option> : null}
               {catalog.map((item) => (
                 <option key={item.id} value={item.id}>{item.displayName} - {item.provider}{item.version ? ` (${item.version})` : ""}</option>
               ))}
@@ -132,12 +174,18 @@ export default function DeployModelPage() {
             System prompt
             <textarea value={systemPrompt} onChange={(event) => setSystemPrompt(event.target.value)} rows={8} />
           </label>
-          <button className="primary-button" type="submit" disabled={!selectedModel}>Deploy model</button>
+          <button className="primary-button" type="submit" disabled={!selectedModel || submitLoading || !deploymentName || !description || !systemPrompt}>
+            {submitLoading ? "Deploying..." : "Deploy model"}
+          </button>
+          {catalogError ? <p className="error-text">{catalogError}</p> : null}
+          {deploymentsError ? <p className="error-text">{deploymentsError}</p> : null}
+          {submitError ? <p className="error-text">{submitError}</p> : null}
           {status ? <p className="success-text">{status}</p> : null}
         </form>
 
         <section className="surface-card chat-panel">
           <h2>Deployments</h2>
+          {deploymentsLoading ? <p className="hero-copy">Loading deployments...</p> : null}
           <div className="chat-thread">
             {deployments.map((deployment) => (
               <div className="message assistant" key={deployment.id}>
@@ -148,8 +196,8 @@ export default function DeployModelPage() {
                   {deployment.provisioningMessage}
                 </p>
                 {deployment.tenantId !== "platform" ? (
-                  <button className="secondary-button" type="button" onClick={() => handleDelete(deployment.id)}>
-                    Delete deployment
+                  <button className="secondary-button" type="button" onClick={() => handleDelete(deployment.id)} disabled={deletingId === deployment.id}>
+                    {deletingId === deployment.id ? "Deleting..." : "Delete deployment"}
                   </button>
                 ) : null}
               </div>

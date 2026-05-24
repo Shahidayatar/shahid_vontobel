@@ -98,8 +98,11 @@ export class ModelDeploymentService {
         if (items.length > 0) {
           return items;
         }
+        throw new Error("Azure OpenAI catalog returned no deployable models");
       } catch {
-        // Fall back to the built-in catalog if Azure management access is not ready yet.
+        // If Azure management access exists, do not silently fall back.
+        // The UI should surface the real auth or catalog problem.
+        throw new Error("Failed to load Azure OpenAI model catalog");
       }
     }
 
