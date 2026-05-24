@@ -4,7 +4,12 @@ import type { AppContainer } from "../container";
 export function createModelDeploymentController(container: AppContainer) {
   return {
     catalog: async (_req: Request, res: Response) => {
-      return res.json(await container.modelDeploymentService.listCatalog());
+      try {
+        return res.json(await container.modelDeploymentService.listCatalog());
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to load model catalog";
+        return res.status(500).json({ error: message });
+      }
     },
     listDeployments: (req: Request, res: Response) => {
       const tenantId = req.auth?.tenantId ?? req.query.tenantId?.toString();
