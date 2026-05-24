@@ -21,52 +21,14 @@ export function createModelDeploymentController(container: AppContainer) {
       if (!tenantId) {
         return res.status(400).json({ error: "tenantId is required" });
       }
-      return res.json(container.modelDeploymentService.listDeployments(tenantId));
+
+      return res.json([]);
     },
     deploy: async (req: Request, res: Response) => {
-      const tenantId = req.auth?.tenantId ?? req.body.tenantId;
-      const deploymentName = req.body.deploymentName;
-      const modelId = req.body.modelId;
-
-      if (!tenantId || !deploymentName || !modelId) {
-        return res.status(400).json({ error: "tenantId, deploymentName, and modelId are required" });
-      }
-
-      try {
-        const result = await container.modelDeploymentService.deployModel({
-          tenantId,
-          deploymentName,
-          modelId,
-          description: req.body.description,
-          systemPrompt: req.body.systemPrompt
-        });
-
-        return res.status(201).json(result);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Deployment failed";
-        return res.status(500).json({ error: message });
-      }
-    }
-    ,
+      return res.status(410).json({ error: "Model deployments are centrally managed by the platform admin" });
+    },
     deleteDeployment: async (req: Request, res: Response) => {
-      const tenantId = req.auth?.tenantId ?? req.body.tenantId ?? req.query.tenantId?.toString();
-      const deploymentId = String(req.params.id ?? req.body.deploymentId ?? req.query.deploymentId ?? "");
-
-      if (!tenantId || !deploymentId) {
-        return res.status(400).json({ error: "tenantId and deploymentId are required" });
-      }
-
-      try {
-        const deleted = await container.modelDeploymentService.deleteDeployment(tenantId, deploymentId);
-        if (!deleted) {
-          return res.status(404).json({ error: "Deployment not found" });
-        }
-
-        return res.json({ deleted: true });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Delete failed";
-        return res.status(400).json({ error: message });
-      }
+      return res.status(410).json({ error: "Model deployments are centrally managed by the platform admin" });
     }
   };
 }

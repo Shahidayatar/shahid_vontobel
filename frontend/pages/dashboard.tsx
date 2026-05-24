@@ -23,6 +23,12 @@ type ModelDeployment = {
   updatedAt: string;
 };
 
+type ModelCatalogItem = {
+  id: string;
+  displayName: string;
+  modelName: string;
+};
+
 type UsageResponse = {
   requestCount: number;
   totalInputTokens: number;
@@ -33,7 +39,7 @@ type UsageResponse = {
 export default function DashboardPage() {
   const tenantId = useTenantId();
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [deployments, setDeployments] = useState<ModelDeployment[]>([]);
+  const [models, setModels] = useState<ModelCatalogItem[]>([]);
   const [usage, setUsage] = useState<UsageResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,12 +54,10 @@ export default function DashboardPage() {
         setError(err instanceof Error ? err.message : "Failed to load agents");
       });
 
-    api.get<ModelDeployment[]>(`/model-deployments?tenantId=${encodeURIComponent(tenantId)}`)
-      .then((items) => {
-        setDeployments(items);
-      })
+    api.get<ModelCatalogItem[]>(`/models/catalog`)
+      .then(setModels)
       .catch(() => {
-        setDeployments([]);
+        setModels([]);
       });
 
     api.get<UsageResponse>(`/usage/${encodeURIComponent(tenantId)}`)
@@ -63,26 +67,24 @@ export default function DashboardPage() {
       });
   }, [tenantId]);
 
-  const deployedModels = useMemo(() => deployments.filter((deployment) => deployment.tenantId !== "platform"), [deployments]);
   const activeAgents = useMemo(() => agents.filter((agent) => agent.isProvisioned).length, [agents]);
-  const succeededDeployments = useMemo(() => deployedModels.filter((deployment) => deployment.state === "succeeded").length, [deployedModels]);
-  const failedDeployments = useMemo(() => deployedModels.filter((deployment) => deployment.state === "failed").length, [deployedModels]);
+  const modelAvailability = useMemo(() => models.length, [models]);
 
   const recentActivity = useMemo(() => {
-    const deploymentCards = deployedModels.slice(0, 3).map((deployment) => ({
-      title: deployment.deploymentName,
-      detail: `${deployment.modelName} • ${deployment.state}`,
-      tone: deployment.state === "succeeded" ? "success" : deployment.state === "failed" ? "danger" : "warning"
-    }));
-
     const agentCards = agents.slice(0, 2).map((agent) => ({
       title: agent.name,
       detail: `${agent.model} • ${agent.isProvisioned ? "provisioned" : "pending"}`,
       tone: agent.isProvisioned ? "success" : "warning"
     }));
 
-    return [...deploymentCards, ...agentCards].slice(0, 5);
-  }, [agents, deployedModels]);
+    const modelCards = models.slice(0, 2).map((model) => ({
+      title: model.displayName,
+      detail: `Shared model • ${model.modelName}`,
+      tone: "neutral"
+    }));
+
+    return [...modelCards, ...agentCards].slice(0, 5);
+  }, [agents, models]);
 
   async function handleDelete(agentId: string) {
     if (!tenantId) {
@@ -101,7 +103,7 @@ export default function DashboardPage() {
           <p className="eyebrow">AI Foundry as a Service</p>
           <h1>Enterprise AI control plane</h1>
           <p className="hero-copy">
-            Self-service deployments, governed agents, retrieval pipelines, and observability for every internal team.
+            Shared models, governed agents, retrieval pipelines, and observability for every internal team.
           </p>
         </div>
         <div className="hero-actions">
@@ -112,9 +114,9 @@ export default function DashboardPage() {
 
       <section className="page-grid metrics-grid dashboard-metrics">
         <article className="surface-card metric-card">
-          <span>Total deployed models</span>
-          <strong>{deployedModels.length}</strong>
-          <p>{succeededDeployments} healthy, {failedDeployments} failed</p>
+          <span>Available models</span>
+          <strong>{modelAvailability}</strong>
+          <p>Shared centrally by the platform admin</p>
         </article>
         <article className="surface-card metric-card">
           <span>Active agents</span>
@@ -136,27 +138,27 @@ export default function DashboardPage() {
       <section className="page-grid dashboard-grid">
         <article className="surface-card dashboard-panel">
           <div className="section-title">
-            <h2>Deployment health</h2>
-            <p>Model and agent provisioning status across the tenant.</p>
+            <h2>Model availability</h2>
+            <p>Shared model catalog currently visible to the tenant.</p>
           </div>
           <div className="health-stack">
             <div className="health-row">
-              <span>Healthy deployments</span>
-              <strong>{succeededDeployments}</strong>
+              <span>Shared models</span>
+              <strong>{modelAvailability}</strong>
             </div>
-            <div className="health-bar"><span style={{ width: `${Math.max(20, Math.min(100, succeededDeployments * 30))}%` }} /></div>
+            <div className="health-bar"><span style={{ width: `${Math.max(20, Math.min(100, modelAvailability * 12))}%` }} /></div>
             <div className="health-row">
-              <span>Failed deployments</span>
-              <strong>{failedDeployments}</strong>
+              <span>Tenant isolation</span>
+              <strong>On</strong>
             </div>
-            <div className="health-bar danger"><span style={{ width: `${Math.max(10, Math.min(100, failedDeployments * 45))}%` }} /></div>
+            <div className="health-bar danger"><span style={{ width: "12%" }} /></div>
           </div>
         </article>
 
         <article className="surface-card dashboard-panel">
           <div className="section-title">
             <h2>Recent activity</h2>
-            <p>Latest deployment and agent events in the control plane.</p>
+            <p>Latest model, agent, and knowledge activity in the control plane.</p>
           </div>
           <div className="activity-list">
             {recentActivity.map((item) => (
@@ -205,7 +207,7 @@ export default function DashboardPage() {
             <p>Launch into the major control-plane workflows.</p>
           </div>
           <div className="stack-list compact">
-            <Link className="shortcut-link" href="/deploy-model">Deploy model</Link>
+            <Link className="shortcut-link" href="/model-catalog">Model catalog</Link>
             <Link className="shortcut-link" href="/create-agent">Create agent</Link>
             <Link className="shortcut-link" href="/upload-documents">Upload documents</Link>
             <Link className="shortcut-link" href="/analytics">Usage and cost analytics</Link>

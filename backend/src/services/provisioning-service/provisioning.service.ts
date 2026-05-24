@@ -27,12 +27,14 @@ export class ProvisioningService {
       throw new Error("Agent not found for tenant");
     }
 
+    const tenantSlug = tenantId.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
     try {
       const deploymentName = options.deploymentName ?? agent.resourcePlan?.openAIDeploymentName ?? `aoai-${tenantId.slice(0, 8)}-${agentId.slice(0, 8)}`;
       const resourcePlan: AgentResourcePlan = {
-        openAIDeploymentName: deploymentName,
-        searchIndexName: `idx-${agentId.slice(0, 12)}`,
-        storageContainerName: `docs-${agentId.slice(0, 12)}`,
+        openAIDeploymentName: this.azureClients?.openAi?.chatDeployment ?? deploymentName,
+        searchIndexName: `${tenantSlug || "tenant"}-index`,
+        storageContainerName: `${tenantSlug || "tenant"}-documents`,
         keyVaultSecretNames: ["aoai-key", "search-key", "storage-connection-string"],
         managedIdentityName: `mi-${agentId.slice(0, 12)}`
       };
@@ -40,19 +42,12 @@ export class ProvisioningService {
       const queued = this.updateStatus(agentId, tenantId, "queued", "Queued for provisioning", ["Resource plan generated"]);
       logger.info("Provisioning queued", { agentId, tenantId, requestId: randomUUID() });
 
-      const running = this.updateStatus(agentId, tenantId, "running", "Creating resources", ["Azure OpenAI deployment", "AI Search index", "Blob container", "Key Vault secret plan", "Managed identity"]);
+      const running = this.updateStatus(agentId, tenantId, "running", "Creating tenant-isolated resources", ["AI Search index", "Blob container", "Key Vault secret plan", "Managed identity"]);
       await Promise.resolve(running);
 
-      if (this.azureClients?.openAiManagement) {
-        await this.azureClients.openAiManagement.createDeployment({
-          deploymentName: resourcePlan.openAIDeploymentName,
-          modelName: options.modelName ?? agent.model,
-          modelVersion: options.modelVersion,
-          capacity: 1
-        });
-      }
+      const sharedDeploymentName = this.azureClients?.openAi?.chatDeployment ?? options.deploymentName ?? agent.model;
 
-      const completed = this.updateStatus(agentId, tenantId, "succeeded", "Provisioning complete", ["Azure OpenAI deployment created.", "Search index prepared.", "Blob container prepared.", "Key Vault secret plan stored.", "Managed identity attached."]);
+      const completed = this.updateStatus(agentId, tenantId, "succeeded", "Provisioning complete", ["Shared Azure OpenAI deployment assigned.", "Search index prepared.", "Blob container prepared.", "Key Vault secret plan stored.", "Managed identity attached."]);
       if (this.azureClients?.search) {
         await this.azureClients.search.ensureIndex(resourcePlan.searchIndexName, 1536);
       }
@@ -66,7 +61,10 @@ export class ProvisioningService {
       }
 
       if (this.agentService) {
-        this.agentService.markProvisioned(agentId, resourcePlan, completed.state);
+        this.agentService.markProvisioned(agentId, {
+          ...resourcePlan,
+          openAIDeploymentName: sharedDeploymentName
+        }, completed.state);
       }
 
       return completed;
@@ -75,8 +73,8 @@ export class ProvisioningService {
       if (this.agentService) {
         this.agentService.markProvisioned(agentId, {
           openAIDeploymentName: options.deploymentName ?? agent.resourcePlan?.openAIDeploymentName ?? `aoai-${tenantId.slice(0, 8)}-${agentId.slice(0, 8)}`,
-          searchIndexName: `idx-${agentId.slice(0, 12)}`,
-          storageContainerName: `docs-${agentId.slice(0, 12)}`,
+          searchIndexName: `${tenantSlug || "tenant"}-index`,
+          storageContainerName: `${tenantSlug || "tenant"}-documents`,
           keyVaultSecretNames: ["aoai-key", "search-key", "storage-connection-string"],
           managedIdentityName: `mi-${agentId.slice(0, 12)}`
         }, failed.state);

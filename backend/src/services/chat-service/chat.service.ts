@@ -46,7 +46,7 @@ export class ChatService {
     const completion = await this.generateAnswer({
       agentName: agent.name,
       model: agent.model,
-      deploymentName: agent.resourcePlan?.openAIDeploymentName ?? this.azureClients?.openAi?.chatDeployment ?? agent.model,
+      deploymentName: this.azureClients?.openAi?.chatDeployment ?? agent.resourcePlan?.openAIDeploymentName ?? agent.model,
       systemPrompt: prompt.systemPrompt,
       question: request.question,
       contexts: ranked.map((chunk) => ({ fileName: chunk.fileName, text: chunk.text, score: chunk.score }))
@@ -80,7 +80,7 @@ export class ChatService {
 
   private async retrieveContext(agentId: string, tenantId: string, question: string, queryVector: number[]) {
     const agent = this.agentRepository.findById(agentId);
-    const indexName = agent?.resourcePlan?.searchIndexName ?? `${agentId.slice(0, 12)}-chunks`;
+    const indexName = agent?.resourcePlan?.searchIndexName ?? `tenant-${tenantId}-index`;
 
     if (this.azureClients?.search) {
       try {

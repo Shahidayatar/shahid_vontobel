@@ -13,7 +13,7 @@ const navSections = [
     label: "Core",
     items: [
       { href: "/dashboard", label: "Dashboard" },
-      { href: "/deploy-model", label: "Model Deployments" },
+      { href: "/model-catalog", label: "Model Catalog" },
       { href: "/create-agent", label: "Agents" },
       { href: "/knowledge-bases", label: "Knowledge Bases" },
       { href: "/upload-documents", label: "Document Uploads" },
@@ -27,6 +27,7 @@ const navSections = [
       { href: "/evaluations", label: "Evaluations" },
       { href: "/analytics", label: "Analytics" },
       { href: "/api-keys", label: "API Keys" },
+      { href: "/admin", label: "Admin Panel" },
       { href: "/settings", label: "Settings" }
     ]
   }

@@ -39,7 +39,7 @@ export class RagService {
 
     const blob = await storeLocalBlob(this.storageRoot, `${input.tenantId}/${input.agentId}`, `${randomUUID()}-${input.fileName}`, input.content, input.mimeType);
     if (this.azureClients?.blob) {
-      const containerName = agent.resourcePlan?.storageContainerName ?? `${input.agentId.slice(0, 12)}docs`;
+      const containerName = agent.resourcePlan?.storageContainerName ?? `tenant-${input.tenantId}-documents`;
       const containerClient = await this.azureClients.blob.ensureContainer(containerName);
       const blobClient = containerClient.getBlockBlobClient(blob.fileName);
       await blobClient.uploadData(input.content, {
@@ -85,7 +85,7 @@ export class RagService {
 
     const documents = this.documentRepository.listDocumentsByAgent(agentId, tenantId).filter((document) => document.status !== "indexed");
     const indexedChunks: DocumentChunk[] = [];
-    const searchIndexName = agent.resourcePlan?.searchIndexName ?? `${agentId.slice(0, 12)}-chunks`;
+    const searchIndexName = agent.resourcePlan?.searchIndexName ?? `tenant-${tenantId}-index`;
 
     if (this.azureClients?.search) {
       await this.azureClients.search.ensureIndex(searchIndexName, 1536);

@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import { AppShell } from "../components/AppShell";
 import { api } from "../services/api";
 import { useTenantId } from "../hooks/useTenantId";
@@ -12,6 +13,7 @@ type ModelCatalogItem = {
 };
 
 export default function CreateAgentPage() {
+  const router = useRouter();
   const tenantId = useTenantId();
   const [catalog, setCatalog] = useState<ModelCatalogItem[]>([]);
   const [name, setName] = useState("Customer Support Copilot");
@@ -35,6 +37,14 @@ export default function CreateAgentPage() {
     api.get<ModelCatalogItem[]>('/models/catalog')
       .then((items) => {
         setCatalog(items);
+        const requestedModel = typeof router.query.model === "string" ? router.query.model : "";
+        const selected = requestedModel ? items.find((item) => item.modelName === requestedModel) : undefined;
+
+        if (selected) {
+          setModel(selected.modelName);
+          return;
+        }
+
         if (items.length > 0) {
           setModel(items[0].modelName);
         }
@@ -43,7 +53,7 @@ export default function CreateAgentPage() {
         setCatalogError(error instanceof Error ? error.message : "Failed to load model catalog");
       })
       .finally(() => setCatalogLoading(false));
-  }, []);
+  }, [router.query.model]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
