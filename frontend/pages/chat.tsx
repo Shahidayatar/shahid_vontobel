@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { AppShell } from "../components/AppShell";
 import { api } from "../services/api";
 import { useTenantId } from "../hooks/useTenantId";
@@ -11,6 +12,7 @@ type ChatMessage = {
 };
 
 export default function ChatPage() {
+  const router = useRouter();
   const tenantId = useTenantId();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [agentId, setAgentId] = useState("");
@@ -24,11 +26,17 @@ export default function ChatPage() {
 
     api.get<Agent[]>(`/agents?tenantId=${encodeURIComponent(tenantId)}`).then((items) => {
       setAgents(items);
+      const selectedAgentId = typeof router.query.agentId === "string" ? router.query.agentId : "";
+      if (selectedAgentId && items.some((item) => item.id === selectedAgentId)) {
+        setAgentId(selectedAgentId);
+        return;
+      }
+
       if (items.length > 0) {
         setAgentId(items[0].id);
       }
     });
-  }, [tenantId]);
+  }, [tenantId, router.query.agentId]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

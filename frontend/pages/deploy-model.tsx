@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import { AppShell } from "../components/AppShell";
 import { api } from "../services/api";
 import { useTenantId } from "../hooks/useTenantId";
@@ -16,6 +17,7 @@ type ModelCatalogItem = {
 type ModelDeployment = {
   id: string;
   tenantId: string;
+  agentId: string;
   deploymentName: string;
   modelName: string;
   state: "queued" | "running" | "succeeded" | "failed";
@@ -25,6 +27,7 @@ type ModelDeployment = {
 };
 
 export default function DeployModelPage() {
+  const router = useRouter();
   const tenantId = useTenantId();
   const [catalog, setCatalog] = useState<ModelCatalogItem[]>([]);
   const [deployments, setDeployments] = useState<ModelDeployment[]>([]);
@@ -76,6 +79,8 @@ export default function DeployModelPage() {
   }, [tenantId]);
 
   const selectedModel = useMemo(() => catalog.find((item) => item.id === modelId), [catalog, modelId]);
+
+  const deployedChatTarget = useMemo(() => deployments.find((deployment) => deployment.state === "succeeded" && deployment.tenantId !== "platform"), [deployments]);
 
   function handleModelChange(nextModelId: string) {
     setModelId(nextModelId);
@@ -196,13 +201,21 @@ export default function DeployModelPage() {
                   {deployment.provisioningMessage}
                 </p>
                 {deployment.tenantId !== "platform" ? (
-                  <button className="secondary-button" type="button" onClick={() => handleDelete(deployment.id)} disabled={deletingId === deployment.id}>
-                    {deletingId === deployment.id ? "Deleting..." : "Delete deployment"}
-                  </button>
+                  <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                    {deployment.state === "succeeded" ? (
+                      <button className="secondary-button" type="button" onClick={() => router.push(`/chat?agentId=${encodeURIComponent(deployment.agentId)}`)}>
+                        Chat with agent
+                      </button>
+                    ) : null}
+                    <button className="secondary-button" type="button" onClick={() => handleDelete(deployment.id)} disabled={deletingId === deployment.id}>
+                      {deletingId === deployment.id ? "Deleting..." : "Delete deployment"}
+                    </button>
+                  </div>
                 ) : null}
               </div>
             ))}
           </div>
+          {deployedChatTarget ? <p className="hero-copy">Your latest successful deployment is ready to chat as {deployedChatTarget.deploymentName}.</p> : null}
         </section>
       </div>
     </AppShell>
