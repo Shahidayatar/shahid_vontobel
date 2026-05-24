@@ -80,7 +80,7 @@ export default function DeployModelPage() {
 
   const selectedModel = useMemo(() => catalog.find((item) => item.id === modelId), [catalog, modelId]);
 
-  const deployedChatTarget = useMemo(() => deployments.find((deployment) => deployment.state === "succeeded" && deployment.tenantId !== "platform"), [deployments]);
+  const deployedCount = useMemo(() => deployments.filter((deployment) => deployment.tenantId !== "platform").length, [deployments]);
 
   function handleModelChange(nextModelId: string) {
     setModelId(nextModelId);
@@ -154,9 +154,27 @@ export default function DeployModelPage() {
   }, [tenantId]);
 
   return (
-    <AppShell title="Deploy model" description="Pick a base model, create the deployment, and let the platform provision the backing resources.">
-      <div className="page-grid chat-grid">
-        <form className="surface-card form-card" onSubmit={handleSubmit}>
+    <AppShell title="Deploy model" description="Pick a base model, create the deployment, and then open a dedicated chat for that deployed model.">
+      <section className="deploy-toolbar hero-panel">
+        <div>
+          <p className="eyebrow">Deployed models</p>
+          <h1>{deployedCount}</h1>
+          <p className="hero-copy">Each successful deployment gets its own agent and chat entry.</p>
+        </div>
+        <div className="hero-actions">
+          <button className="secondary-button" type="button" onClick={() => router.push("/chat")}>
+            Open chat
+          </button>
+        </div>
+      </section>
+
+      <div className="deploy-layout">
+        <form className="surface-card deploy-form-card form-card" onSubmit={handleSubmit}>
+          <div className="section-title">
+            <h2>Deploy a model</h2>
+            <p>Only Azure models that can actually be deployed are shown here.</p>
+          </div>
+
           <label>
             Available model
             <select value={modelId} onChange={(event) => handleModelChange(event.target.value)} disabled={catalogLoading || catalog.length === 0}>
@@ -188,23 +206,26 @@ export default function DeployModelPage() {
           {status ? <p className="success-text">{status}</p> : null}
         </form>
 
-        <section className="surface-card chat-panel">
-          <h2>Deployments</h2>
+        <section className="surface-card deployed-panel">
+          <div className="section-title">
+            <h2>Deployed models</h2>
+            <p>Chat with a deployment once it succeeds, or delete tenant-owned deployments when you are done.</p>
+          </div>
           {deploymentsLoading ? <p className="hero-copy">Loading deployments...</p> : null}
-          <div className="chat-thread">
+          <div className="deployment-card-list">
             {deployments.map((deployment) => (
-              <div className="message assistant" key={deployment.id}>
-                <span>{deployment.state}</span>
-                <p>
-                  <strong>{deployment.deploymentName}</strong> using {deployment.modelName}
-                  <br />
-                  {deployment.provisioningMessage}
-                </p>
+              <article className={`deployment-card ${deployment.state}`} key={deployment.id}>
+                <div className="deployment-card-header">
+                  <span className="status-chip">{deployment.state}</span>
+                  <span className="model-name">{deployment.modelName}</span>
+                </div>
+                <h3>{deployment.deploymentName}</h3>
+                <p>{deployment.provisioningMessage}</p>
                 {deployment.tenantId !== "platform" ? (
-                  <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                  <div className="deployment-card-actions">
                     {deployment.state === "succeeded" ? (
-                      <button className="secondary-button" type="button" onClick={() => router.push(`/chat?agentId=${encodeURIComponent(deployment.agentId)}`)}>
-                        Chat with agent
+                      <button className="primary-button" type="button" onClick={() => router.push(`/chat?agentId=${encodeURIComponent(deployment.agentId)}`)}>
+                        Chat with model
                       </button>
                     ) : null}
                     <button className="secondary-button" type="button" onClick={() => handleDelete(deployment.id)} disabled={deletingId === deployment.id}>
@@ -212,10 +233,9 @@ export default function DeployModelPage() {
                     </button>
                   </div>
                 ) : null}
-              </div>
+              </article>
             ))}
           </div>
-          {deployedChatTarget ? <p className="hero-copy">Your latest successful deployment is ready to chat as {deployedChatTarget.deploymentName}.</p> : null}
         </section>
       </div>
     </AppShell>

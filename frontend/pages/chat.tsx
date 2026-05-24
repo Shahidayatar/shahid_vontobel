@@ -54,7 +54,7 @@ export default function ChatPage() {
   }
 
   return (
-    <AppShell title="Chat" description="Test an agent against its retrieved context and inspect the grounded response.">
+    <AppShell title="Chat" description="Chat with a deployed model or a provisioned agent and inspect the grounded response.">
       <div className="page-grid chat-grid">
         <form className="surface-card form-card" onSubmit={handleSubmit}>
           <label>

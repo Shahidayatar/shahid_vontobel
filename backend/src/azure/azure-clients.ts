@@ -8,7 +8,7 @@ import {
 import { SecretClient } from "@azure/keyvault-secrets";
 import { env } from "../config/env";
 
-const DEPLOYABLE_MODEL_NAMES = new Set(["gpt-5-pro", "gpt-4o", "gpt-4o-mini"]);
+const DEPLOYABLE_MODEL_NAMES = new Set(["gpt-5-pro", "gpt-4o-mini"]);
 
 export type AzureOpenAiModelCatalogEntry = {
   id: string;
