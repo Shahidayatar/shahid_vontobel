@@ -1,43 +1,29 @@
-import { randomUUID } from "crypto";
-import type { CreateModelDto } from "./model.dto";
 import type { ModelDeployment } from "./model.types";
 
 class ModelRepository {
-  private readonly models: ModelDeployment[] = [
-    {
-      id: randomUUID(),
-      name: "gpt4o-production",
-      model: "gpt-4o",
-      region: "swedencentral",
-      status: "running",
-      health: "healthy",
-      createdAt: new Date().toISOString()
-    }
-  ];
+  private models: ModelDeployment[] = [];
 
   list(): ModelDeployment[] {
     return this.models;
   }
 
-  create(input: CreateModelDto): ModelDeployment {
-    const model: ModelDeployment = {
-      id: randomUUID(),
-      name: input.name,
-      model: input.model,
-      region: input.region,
-      status: "running",
-      health: "healthy",
-      createdAt: new Date().toISOString()
-    };
-    this.models.unshift(model);
+  setAll(models: ModelDeployment[]): void {
+    this.models = models;
+  }
+
+  upsert(model: ModelDeployment): ModelDeployment {
+    const index = this.models.findIndex((item) => item.id === model.id);
+    if (index >= 0) {
+      this.models[index] = model;
+    } else {
+      this.models.unshift(model);
+    }
+
     return model;
   }
 
   delete(id: string): void {
-    const index = this.models.findIndex((model) => model.id === id);
-    if (index >= 0) {
-      this.models.splice(index, 1);
-    }
+    this.models = this.models.filter((model) => model.id !== id);
   }
 
   findById(id: string): ModelDeployment | undefined {

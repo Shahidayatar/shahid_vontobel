@@ -5,16 +5,28 @@ import { modelService } from "./model.service";
 
 export const modelRouter = Router();
 
-modelRouter.get("/", (_request, response) => {
-  response.json(modelService.list());
+modelRouter.get("/", async (_request, response, next) => {
+  try {
+    response.json(await modelService.list());
+  } catch (error) {
+    next(error);
+  }
 });
 
-modelRouter.post("/", (request, response) => {
-  const dto = validate(createModelSchema, request.body);
-  response.status(201).json(modelService.create(dto));
+modelRouter.post("/", async (request, response, next) => {
+  try {
+    const dto = validate(createModelSchema, request.body);
+    response.status(201).json(await modelService.create(dto));
+  } catch (error) {
+    next(error);
+  }
 });
 
-modelRouter.delete("/:id", (request, response) => {
-  modelService.remove(request.params.id);
-  response.status(204).send();
+modelRouter.delete("/:id", async (request, response, next) => {
+  try {
+    await modelService.remove(request.params.id);
+    response.status(204).send();
+  } catch (error) {
+    next(error);
+  }
 });

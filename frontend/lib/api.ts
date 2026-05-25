@@ -1,6 +1,10 @@
 import type { Agent, ChatMessage, DashboardOverview, ModelDeployment } from "@/types/domain";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  (process.env.NODE_ENV === "production"
+    ? "https://shahid-vontobel-api.azurewebsites.net"
+    : "http://localhost:4000");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
