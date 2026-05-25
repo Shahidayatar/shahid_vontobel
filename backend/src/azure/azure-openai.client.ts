@@ -1,4 +1,5 @@
 import { env } from "../config/env";
+import { logger } from "../shared/logging/logger";
 
 type ChatRequest = {
   deployment: string;
@@ -18,6 +19,12 @@ export async function runAzureOpenAIChat(request: ChatRequest): Promise<ChatResu
   const started = Date.now();
 
   if (!env.AZURE_OPENAI_ENDPOINT || !env.AZURE_OPENAI_KEY) {
+    logger.warn("Azure OpenAI chat using simulated response", {
+      deployment: request.deployment,
+      hasEndpoint: Boolean(env.AZURE_OPENAI_ENDPOINT),
+      hasKey: Boolean(env.AZURE_OPENAI_KEY)
+    });
+
     return {
       content: `Simulated response for deployment ${request.deployment}. Configure AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_KEY for live calls.`,
       promptTokens: Math.round(request.userMessage.length / 3),
@@ -25,6 +32,13 @@ export async function runAzureOpenAIChat(request: ChatRequest): Promise<ChatResu
       latencyMs: 160
     };
   }
+
+  logger.info("Azure OpenAI chat request started", {
+    deployment: request.deployment,
+    endpointConfigured: true,
+    hasSystemPrompt: Boolean(request.systemPrompt),
+    temperature: request.temperature ?? 0.4
+  });
 
   const messages = [
     ...(request.systemPrompt ? [{ role: "system", content: request.systemPrompt }] : []),
@@ -47,6 +61,11 @@ export async function runAzureOpenAIChat(request: ChatRequest): Promise<ChatResu
   );
 
   if (!response.ok) {
+    logger.error("Azure OpenAI chat request failed", {
+      deployment: request.deployment,
+      status: response.status
+    });
+
     throw new Error(`Azure OpenAI request failed with ${response.status}`);
   }
 
@@ -55,10 +74,19 @@ export async function runAzureOpenAIChat(request: ChatRequest): Promise<ChatResu
     usage?: { prompt_tokens: number; completion_tokens: number };
   };
 
-  return {
+  const result = {
     content: payload.choices[0]?.message?.content ?? "",
     promptTokens: payload.usage?.prompt_tokens ?? 0,
     completionTokens: payload.usage?.completion_tokens ?? 0,
     latencyMs: Date.now() - started
   };
+
+  logger.info("Azure OpenAI chat request completed", {
+    deployment: request.deployment,
+    latencyMs: result.latencyMs,
+    promptTokens: result.promptTokens,
+    completionTokens: result.completionTokens
+  });
+
+  return result;
 }
