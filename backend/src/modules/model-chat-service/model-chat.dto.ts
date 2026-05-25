@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const modelChatRequestSchema = z.object({
-  modelId: z.string().uuid(),
+  modelId: z.string().min(1),
   message: z.string().min(1)
 });
 
