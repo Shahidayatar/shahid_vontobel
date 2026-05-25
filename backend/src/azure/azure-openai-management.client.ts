@@ -117,7 +117,7 @@ function toSummary(deployment: AzureDeployment): ModelDeploymentSummary {
   const status = mapStatus(deployment.properties?.provisioningState);
 
   return {
-    id: deployment.id ?? randomUUID(),
+    id: deployment.name || deployment.id || randomUUID(),
     name: deployment.name,
     model: modelName,
     region: env.AZURE_OPENAI_LOCATION ?? "unknown",
