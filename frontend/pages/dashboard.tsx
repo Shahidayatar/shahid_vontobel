@@ -69,6 +69,7 @@ export default function DashboardPage() {
 
   const activeAgents = useMemo(() => agents.filter((agent) => agent.isProvisioned).length, [agents]);
   const modelAvailability = useMemo(() => models.length, [models]);
+  const totalDeployedModels = useMemo(() => agents.filter((agent) => agent.isProvisioned).length, [agents]);
 
   const recentActivity = useMemo(() => {
     const agentCards = agents.slice(0, 2).map((agent) => ({
@@ -103,11 +104,11 @@ export default function DashboardPage() {
           <p className="eyebrow">AI Foundry as a Service</p>
           <h1>Enterprise AI control plane</h1>
           <p className="hero-copy">
-            Shared models, governed agents, retrieval pipelines, and observability for every internal team.
+            Shared models, deployed agents, knowledge intake, and usage tracking for every internal team.
           </p>
         </div>
         <div className="hero-actions">
-          <Link className="primary-button" href="/create-agent">Create agent</Link>
+          <Link className="primary-button" href="/agents">Create agent</Link>
           <Link className="secondary-button" href="/chat">Open chat</Link>
         </div>
       </section>
@@ -119,8 +120,8 @@ export default function DashboardPage() {
           <p>Shared centrally by the platform admin</p>
         </article>
         <article className="surface-card metric-card">
-          <span>Active agents</span>
-          <strong>{activeAgents}</strong>
+          <span>Deployed models</span>
+          <strong>{totalDeployedModels}</strong>
           <p>{agents.length} total agents in tenant</p>
         </article>
         <article className="surface-card metric-card">
@@ -138,8 +139,8 @@ export default function DashboardPage() {
       <section className="page-grid dashboard-grid">
         <article className="surface-card dashboard-panel">
           <div className="section-title">
-            <h2>Model availability</h2>
-            <p>Shared model catalog currently visible to the tenant.</p>
+            <h2>Platform snapshot</h2>
+            <p>What is currently available to the tenant workspace.</p>
           </div>
           <div className="health-stack">
             <div className="health-row">
@@ -148,10 +149,10 @@ export default function DashboardPage() {
             </div>
             <div className="health-bar"><span style={{ width: `${Math.max(20, Math.min(100, modelAvailability * 12))}%` }} /></div>
             <div className="health-row">
-              <span>Tenant isolation</span>
-              <strong>On</strong>
+              <span>Agent deployment</span>
+              <strong>{activeAgents}</strong>
             </div>
-            <div className="health-bar danger"><span style={{ width: "12%" }} /></div>
+            <div className="health-bar danger"><span style={{ width: `${Math.max(12, Math.min(100, activeAgents * 18))}%` }} /></div>
           </div>
         </article>
 
@@ -178,7 +179,7 @@ export default function DashboardPage() {
         <article className="surface-card">
           <div className="section-title">
             <h2>Agents</h2>
-            <p>Provisioned and pending agent definitions.</p>
+            <p>Provisioned and pending agents available for chat.</p>
           </div>
           {error ? <p className="error-text">{error}</p> : null}
           <div className="stack-list">
@@ -208,9 +209,9 @@ export default function DashboardPage() {
           </div>
           <div className="stack-list compact">
             <Link className="shortcut-link" href="/model-catalog">Model catalog</Link>
-            <Link className="shortcut-link" href="/create-agent">Create agent</Link>
+            <Link className="shortcut-link" href="/agents">Create agent</Link>
             <Link className="shortcut-link" href="/upload-documents">Upload documents</Link>
-            <Link className="shortcut-link" href="/analytics">Usage and cost analytics</Link>
+            <Link className="shortcut-link" href="/chat">Chat playground</Link>
           </div>
         </article>
       </section>

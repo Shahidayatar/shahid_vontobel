@@ -62,7 +62,7 @@ export default function ChatPage() {
           <p className="hero-copy">Switch agents, test prompts, and inspect grounded responses with retrieval context.</p>
         </div>
         <div className="hero-actions">
-          <button className="secondary-button" type="button" onClick={() => router.push("/deploy-model")}>Open deployments</button>
+          <button className="secondary-button" type="button" onClick={() => router.push("/agents")}>Open agents</button>
         </div>
       </section>
 

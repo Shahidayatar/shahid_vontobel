@@ -61,7 +61,7 @@ export default function DeployModelPage() {
         <div className="hero-actions">
           <Link className="secondary-button" href="/model-catalog">Back to catalog</Link>
           {selectedModel ? (
-            <Link className="primary-button" href={`/create-agent?model=${encodeURIComponent(selectedModel.modelName)}`}>
+            <Link className="primary-button" href={`/agents?model=${encodeURIComponent(selectedModel.modelName)}`}>
               Deploy this model
             </Link>
           ) : null}

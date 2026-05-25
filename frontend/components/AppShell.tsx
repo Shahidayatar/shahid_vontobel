@@ -14,21 +14,10 @@ const navSections = [
     items: [
       { href: "/dashboard", label: "Dashboard" },
       { href: "/model-catalog", label: "Model Catalog" },
-      { href: "/create-agent", label: "Agents" },
+      { href: "/agents", label: "Agents" },
       { href: "/knowledge-bases", label: "Knowledge Bases" },
       { href: "/upload-documents", label: "Document Uploads" },
       { href: "/chat", label: "Chat Playground" }
-    ]
-  },
-  {
-    label: "Governance",
-    items: [
-      { href: "/prompt-studio", label: "Prompt Studio" },
-      { href: "/evaluations", label: "Evaluations" },
-      { href: "/analytics", label: "Analytics" },
-      { href: "/api-keys", label: "API Keys" },
-      { href: "/admin", label: "Admin Panel" },
-      { href: "/settings", label: "Settings" }
     ]
   }
 ];
