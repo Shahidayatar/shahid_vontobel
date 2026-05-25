@@ -1,39 +1,41 @@
-import express from "express";
 import cors from "cors";
+import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import { env } from "./config/env";
-import { logger } from "./config/logger";
-import { authMiddleware } from "./middleware/auth";
-import { errorHandler } from "./middleware/error-handler";
-import { requestContextMiddleware } from "./middleware/request-context";
-import { registerRoutes } from "./routes";
-import { createContainer } from "./container";
+import { agentChatRouter } from "./modules/agent-chat-service/agent-chat.controller";
+import { agentRouter } from "./modules/agent-service/agent.controller";
+import { dashboardService } from "./modules/dashboard.service";
+import { modelChatRouter } from "./modules/model-chat-service/model-chat.controller";
+import { modelRouter } from "./modules/model-service/model.controller";
+import { errorHandler } from "./shared/middleware/error-handler";
 
-export function buildApp() {
+export function createApp(): express.Express {
   const app = express();
-  const container = createContainer();
 
   app.use(helmet());
-  app.use(cors());
+  app.use(
+    cors({
+      origin: env.ALLOWED_ORIGIN === "*" ? true : env.ALLOWED_ORIGIN,
+      credentials: true
+    })
+  );
   app.use(express.json({ limit: "2mb" }));
-  app.use(express.urlencoded({ extended: true }));
-  app.use(requestContextMiddleware);
-  app.use(authMiddleware);
-  app.use(morgan("combined"));
+  app.use(morgan("tiny"));
 
-  app.get("/", (_req, res) => {
-    res.json({ status: "ok", app: env.APP_NAME, timestamp: new Date().toISOString() });
+  app.get("/health", (_request, response) => {
+    response.json({ status: "ok" });
   });
 
-  app.get("/healthz", (_req, res) => {
-    res.json({ status: "ok", app: env.APP_NAME, timestamp: new Date().toISOString() });
+  app.get("/api/dashboard/overview", (_request, response) => {
+    response.json(dashboardService.overview());
   });
 
-  registerRoutes(app, container);
+  app.use("/api/models", modelRouter);
+  app.use("/api/model-chat", modelChatRouter);
+  app.use("/api/agents", agentRouter);
+  app.use("/api/agent-chat", agentChatRouter);
+
   app.use(errorHandler);
-
-  logger.info("Application bootstrapped", { app: env.APP_NAME });
-
   return app;
 }

@@ -1,9 +1,9 @@
 import { env } from "./config/env";
-import { logger } from "./config/logger";
-import { buildApp } from "./app";
+import { createApp } from "./app";
+import { logger } from "./shared/logging/logger";
 
-const app = buildApp();
+const app = createApp();
 
 app.listen(env.PORT, () => {
-  logger.info("Backend server started", { port: env.PORT });
+  logger.info("Backend started", { port: env.PORT, env: env.NODE_ENV });
 });

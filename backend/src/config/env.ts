@@ -1,31 +1,26 @@
-import { config as loadEnv } from "dotenv";
+import dotenv from "dotenv";
 import { z } from "zod";
 
-loadEnv();
+dotenv.config();
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  PORT: z.coerce.number().default(8080),
-  AUTH_DISABLED: z.coerce.boolean().default(true),
-  AZURE_USE_MANAGED_IDENTITY: z.coerce.boolean().default(true),
-  AZURE_AD_TENANT_ID: z.string().optional(),
-  AZURE_AD_CLIENT_ID: z.string().optional(),
-  AZURE_AD_ISSUER: z.string().optional(),
-  AZURE_AD_JWKS_URI: z.string().optional(),
+  PORT: z.coerce.number().default(4000),
+  ALLOWED_ORIGIN: z.string().default("*"),
+  ENTRA_TENANT_ID: z.string().optional(),
+  ENTRA_AUDIENCE: z.string().optional(),
   AZURE_OPENAI_ENDPOINT: z.string().optional(),
-  AZURE_OPENAI_SUBSCRIPTION_ID: z.string().optional(),
-  AZURE_OPENAI_RESOURCE_GROUP_NAME: z.string().optional(),
-  AZURE_OPENAI_ACCOUNT_NAME: z.string().optional(),
-  AZURE_OPENAI_LOCATION: z.string().optional(),
-  AZURE_OPENAI_CHAT_DEPLOYMENT: z.string().optional(),
-  AZURE_OPENAI_EMBEDDING_DEPLOYMENT: z.string().optional(),
+  AZURE_OPENAI_API_VERSION: z.string().default("2024-10-21"),
+  AZURE_OPENAI_KEY: z.string().optional(),
   AZURE_SEARCH_ENDPOINT: z.string().optional(),
-  AZURE_SEARCH_INDEX_PREFIX: z.string().default("aifoundry"),
-  AZURE_BLOB_SERVICE_URL: z.string().optional(),
-  AZURE_BLOB_CONTAINER_PREFIX: z.string().default("agentdocs"),
-  AZURE_KEY_VAULT_URL: z.string().optional(),
-  EMBEDDING_DIMENSIONS: z.coerce.number().default(1536),
-  APP_NAME: z.string().default("ai-foundry-as-a-service")
+  AZURE_SEARCH_INDEX: z.string().optional(),
+  AZURE_SEARCH_KEY: z.string().optional(),
+  AZURE_STORAGE_CONNECTION_STRING: z.string().optional()
 });
 
-export const env = envSchema.parse(process.env);
+const parsed = envSchema.safeParse(process.env);
+if (!parsed.success) {
+  throw new Error(`Invalid environment: ${parsed.error.message}`);
+}
+
+export const env = parsed.data;
