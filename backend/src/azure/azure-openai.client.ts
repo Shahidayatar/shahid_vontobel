@@ -1,3 +1,4 @@
+import { DefaultAzureCredential } from "@azure/identity";
 import { env } from "../config/env";
 import { logger } from "../shared/logging/logger";
 
@@ -15,10 +16,21 @@ type ChatResult = {
   latencyMs: number;
 };
 
+const credential = new DefaultAzureCredential();
+
+async function getBearerToken(): Promise<string> {
+  const token = await credential.getToken("https://cognitiveservices.azure.com/.default");
+  if (!token) {
+    throw new Error("Unable to acquire Azure OpenAI bearer token");
+  }
+
+  return token.token;
+}
+
 export async function runAzureOpenAIChat(request: ChatRequest): Promise<ChatResult> {
   const started = Date.now();
 
-  if (!env.AZURE_OPENAI_ENDPOINT || !env.AZURE_OPENAI_KEY) {
+  if (!env.AZURE_OPENAI_ENDPOINT) {
     logger.warn("Azure OpenAI chat using simulated response", {
       deployment: request.deployment,
       hasEndpoint: Boolean(env.AZURE_OPENAI_ENDPOINT),
@@ -36,6 +48,7 @@ export async function runAzureOpenAIChat(request: ChatRequest): Promise<ChatResu
   logger.info("Azure OpenAI chat request started", {
     deployment: request.deployment,
     endpointConfigured: true,
+    authMode: env.AZURE_OPENAI_KEY ? "api-key" : "azure-ad",
     hasSystemPrompt: Boolean(request.systemPrompt),
     temperature: request.temperature ?? 0.4
   });
@@ -51,22 +64,26 @@ export async function runAzureOpenAIChat(request: ChatRequest): Promise<ChatResu
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "api-key": env.AZURE_OPENAI_KEY
+        ...(env.AZURE_OPENAI_KEY
+          ? { "api-key": env.AZURE_OPENAI_KEY }
+          : { Authorization: `Bearer ${await getBearerToken()}` })
       },
       body: JSON.stringify({
         messages,
-        temperature: request.temperature ?? 0.4
+        ...(request.temperature === undefined ? {} : { temperature: request.temperature })
       })
     }
   );
 
   if (!response.ok) {
+    const errorBody = await response.text();
     logger.error("Azure OpenAI chat request failed", {
       deployment: request.deployment,
-      status: response.status
+      status: response.status,
+      body: errorBody
     });
 
-    throw new Error(`Azure OpenAI request failed with ${response.status}`);
+    throw new Error(`Azure OpenAI request failed with ${response.status}: ${errorBody}`);
   }
 
   const payload = (await response.json()) as {

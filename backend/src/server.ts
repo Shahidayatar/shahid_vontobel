@@ -10,6 +10,7 @@ app.listen(env.PORT, () => {
     env: env.NODE_ENV,
     azureOpenAiEndpointConfigured: Boolean(env.AZURE_OPENAI_ENDPOINT),
     azureOpenAiKeyConfigured: Boolean(env.AZURE_OPENAI_KEY),
-    azureOpenAiChatFallback: !(env.AZURE_OPENAI_ENDPOINT && env.AZURE_OPENAI_KEY)
+    azureOpenAiAuthMode: env.AZURE_OPENAI_KEY ? "api-key" : env.AZURE_OPENAI_ENDPOINT ? "azure-ad" : "simulated",
+    azureOpenAiChatFallback: !env.AZURE_OPENAI_ENDPOINT
   });
 });
