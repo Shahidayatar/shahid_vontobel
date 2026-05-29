@@ -13,13 +13,11 @@ Internal enterprise AI platform scaffold for multi-tenant agent creation, RAG in
 ```mermaid
 flowchart LR
   U[Internal User] --> FE[Frontend]
-  FE --> APIM[API Management]
   API --> AG[Agent Service]
   API --> PR[Provisioning Service]
   API --> RG[RAG Service]
   API --> CH[Chat Service]
   API --> PM[Prompt Service]
-  API --> EV[Evaluation Service]
   API --> US[Usage Service]
   RG --> DS[(Document Store)]
   RG --> VS[(Vector Search)]
