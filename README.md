@@ -14,7 +14,6 @@ Internal enterprise AI platform scaffold for multi-tenant agent creation, RAG in
 flowchart LR
   U[Internal User] --> FE[Frontend]
   FE --> APIM[API Management]
-  APIM --> API[Backend Control Plane]
   API --> AG[Agent Service]
   API --> PR[Provisioning Service]
   API --> RG[RAG Service]
