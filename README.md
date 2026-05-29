@@ -27,6 +27,7 @@ flowchart LR
   PR --> MI[Managed Identity / RBAC]
   API --> AI[App Insights / Monitor]
 ```
+<img width="910" height="430" alt="image" src="https://github.com/user-attachments/assets/fa9a8311-785e-4a52-b1e8-cd43639cb004" />
 
 ## Repository layout
 
