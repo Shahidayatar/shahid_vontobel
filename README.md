@@ -10,23 +10,7 @@ Internal enterprise AI platform scaffold for multi-tenant agent creation, RAG in
 
 ## High-level architecture
 
-```mermaid
-flowchart LR
-  U[Internal User] --> FE[Frontend]
-  API --> AG[Agent Service]
-  API --> PR[Provisioning Service]
-  API --> RG[RAG Service]
-  API --> CH[Chat Service]
-  API --> PM[Prompt Service]
-  API --> US[Usage Service]
-  RG --> DS[(Document Store)]
-  RG --> VS[(Vector Search)]
-  CH --> VS
-  CH --> AOAI[Azure OpenAI]
-  PR --> KV[Key Vault]
-  PR --> MI[Managed Identity / RBAC]
-  API --> AI[App Insights / Monitor]
-```
+<img width="1024" height="929" alt="image" src="https://github.com/user-attachments/assets/650017dc-de86-4225-b8da-3e55d9d40536" />
 <img width="910" height="430" alt="image" src="https://github.com/user-attachments/assets/fa9a8311-785e-4a52-b1e8-cd43639cb004" />
 
 ## Repository layout
