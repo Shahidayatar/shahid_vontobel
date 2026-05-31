@@ -9,8 +9,8 @@ class DashboardService {
     return {
       totalModels: models.length,
       activeAgents: agents.length,
-      tokenUsage: 2850000,
-      monthlyCost: 19750,
+      tokenUsage: 285000,
+      monthlyCost: 350,
       recentDeployments: models.slice(0, 4),
       recentChats: [],
       health: {
