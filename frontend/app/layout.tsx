@@ -3,8 +3,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "FoundryOS",
-  description: "Enterprise AI control plane"
+  title: "Vontbel Intenranl",
+  description: "Foundry As service"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
