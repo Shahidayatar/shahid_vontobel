@@ -12,7 +12,7 @@ const metricCards = [
   { key: "totalModels", label: "Total Deployed Models", icon: Cpu },
   { key: "activeAgents", label: "Active Agents", icon: Bot },
   { key: "tokenUsage", label: "Token Usage", icon: Sparkles },
-  { key: "monthlyCost", label: "Estimated Monthly Cost", icon: Coins }
+  { key: "monthlyCost", label: "Estimated Cost", icon: Coins }
 ] as const;
 
 export function DashboardView() {
