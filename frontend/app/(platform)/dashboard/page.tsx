@@ -3,7 +3,7 @@ import { AppShell } from "@/layout/AppShell";
 
 export default function DashboardPage() {
   return (
-    <AppShell title="Dashboard" subtitle="Enterprise overview of deployments, assistants, cost, and health.">
+    <AppShell title="Dashboard (To be decommissioned by friday)" subtitle="Enterprise overview of deployments, assistants, cost, and health.">
       <DashboardView />
     </AppShell>
   );
