@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Epam Internal banking app",
+  title: "Sobi Internal app",
   description: "Foundry As service"
 };
 
