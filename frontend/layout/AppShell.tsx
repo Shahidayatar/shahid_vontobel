@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, Brain, LayoutDashboard, MessageSquareText, ServerCog } from "lucide-react";
+import { Bot, Brain, Info, LayoutDashboard, MessageSquareText, ServerCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -10,7 +10,8 @@ const nav = [
   { href: "/models", label: "Models", icon: ServerCog },
   { href: "/model-chat", label: "Model Chat", icon: MessageSquareText },
   { href: "/agents", label: "Agents", icon: Brain },
-  { href: "/agent-chat", label: "Agent Chat", icon: Bot }
+  { href: "/agent-chat", label: "Agent Chat", icon: Bot },
+  { href: "/project-info", label: "Project Info", icon: Info }
 ];
 
 type AppShellProps = {
