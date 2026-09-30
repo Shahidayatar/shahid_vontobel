@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Sobi Internal app",
+  title: "Visium Internal app",
   description: "Foundry As service"
 };
 

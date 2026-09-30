@@ -29,7 +29,7 @@ export function AppShell({ title, subtitle, children }: AppShellProps) {
         <aside className="glass rounded-2xl p-4">
           <div className="mb-8 px-2 pt-1">
             <p className="font-mono text-xs uppercase tracking-[0.25em] text-cyan-200/70">AI Foundry</p>
-            <h1 className="mt-2 text-2xl font-bold">Sobi Internal app</h1>
+            <h1 className="mt-2 text-2xl font-bold">Visium Internal app</h1>
             <p className="mt-1 text-sm text-slate-300/80">Foundry as a service</p>
           </div>
           <nav className="space-y-1">
